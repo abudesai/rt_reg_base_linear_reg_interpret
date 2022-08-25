@@ -12,6 +12,7 @@ warnings.filterwarnings('ignore')
 
 import algorithm.utils as utils
 from algorithm.model_server import ModelServer
+from algorithm.model import regressor as model
 
 
 prefix = '/opt/ml_vol/'
@@ -37,7 +38,7 @@ app = flask.Flask(__name__)
 def ping():
     """Determine if the container is working and healthy. """
     status = 200
-    response="I am alive!"
+    response=f"Hello - I am {model.MODEL_NAME} model and I am at your service!"
     return flask.Response(response=response, status=status, mimetype="application/json")
 
 
@@ -45,11 +46,9 @@ def ping():
 @app.route("/infer", methods=["POST"])
 def infer():
     """Do an inference on a single batch of data. In this sample server, we take data as CSV, convert
-    it to a pandas data frame for internal use and then convert the predictions back to CSV (which really
-    just means one prediction per line, since there's a single column.
+    it to a pandas data frame for internal use and then convert the predictions back to CSV.
     """
-    data = None
-
+    
     # Convert from CSV to pandas
     if flask.request.content_type == "text/csv":
         data = flask.request.data.decode("utf-8")
@@ -57,7 +56,7 @@ def infer():
         data = pd.read_csv(s)
     else:                
         return flask.Response(
-            response="This predictor only supports CSV data", 
+            response=f"This predictor only supports CSV data. Given {flask.request.content_type}", 
             status=415, mimetype="text/plain"
         )
 

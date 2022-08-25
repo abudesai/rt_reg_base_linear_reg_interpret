@@ -8,23 +8,23 @@ warnings.filterwarnings('ignore')
 
 from sklearn.linear_model import ElasticNet 
 from interpret.glassbox import LinearRegression
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error 
 
 
 model_params_fname = "model_params.save"
 model_fname = "model.save"
 global_explanations_fname = "global_explanations.csv"
 global_explanations_chart_fname = "global_explanations.png"
-MODEL_NAME = "ElasticNet_Interpret"
+
+MODEL_NAME = "reg_base_elasticnet_interpret"
 
 
 class Regressor():     
-    def __init__(self, feature_names, l1_ratio=0.1, alpha=1, **kwargs) -> None:
+    def __init__(self, feature_names, l1_ratio=1e-3, alpha=0.1, **kwargs) -> None:
         self.feature_names = feature_names
         self.l1_ratio = np.float(l1_ratio)
         self.alpha = np.float(alpha)        
         self.model = self.build_model()
-        
         
         
     def build_model(self): 
@@ -37,8 +37,6 @@ class Regressor():
     
     
     def fit(self, train_X, train_y):        
-                 
-    
         self.model.fit(
                 X = train_X,
                 y = train_y
@@ -46,9 +44,7 @@ class Regressor():
     
     def explain_global(self, name): 
         return self.model.explain_global(name=name)
-    
-    def explain_global(self, name): 
-        return self.model.explain_global(name=name)
+
     
     def predict(self, X, verbose=False): 
         preds = self.model.predict(X)

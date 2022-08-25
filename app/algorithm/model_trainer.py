@@ -33,6 +33,7 @@ def get_trained_model(data, data_schema, hyper_params):
     print("Pre-processing data...")
     train_data, _, preprocess_pipe = preprocess_data(train_data, None, data_schema)  
     train_X, train_y = train_data['X'], train_data['y']    
+    
     # print('train_X/y shape:',  train_X.shape, train_y.shape)              
               
     # Create and train model     
@@ -47,7 +48,7 @@ def train_model(train_X, train_y, hyper_params):
     feature_names = list(train_X.columns)
     
     train_X, train_y = train_X.values.astype(np.float), train_y.values.astype(np.float)  
-    
+
     model_params = { **hyper_params }
     
     # Create and train model   

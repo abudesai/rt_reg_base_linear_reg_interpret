@@ -4,6 +4,7 @@ import time
 import pandas as pd, numpy as np
 import pprint
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+from scipy.stats import linregress
 
 sys.path.insert(0, './../app')
 import algorithm.utils as utils 
@@ -122,8 +123,6 @@ def load_and_test_algo():
     test_data = utils.get_data(test_data_path)
     # read data config
     data_schema = utils.get_data_schema(data_schema_path)
-    # set id and target fields for scoring
-    set_id_and_target_cols(data_schema)
     # instantiate the trained model
     predictor = model_server.ModelServer(model_artifacts_path)
     # make predictions
@@ -131,31 +130,39 @@ def load_and_test_algo():
     # save predictions
     predictions.to_csv(os.path.join(testing_outputs_path, "test_predictions.csv"), index=False)
     # score the results
-    results = score(test_data, predictions)  
+    test_key = get_test_key()
+    results = score(test_key, predictions, data_schema)  
     print("done with predictions")
     return results
 
-def set_id_and_target_cols(data_schema):
-    global id_col, target_col 
+
+def get_test_key():
+    test_key = pd.read_csv(f"{local_datapath}/{dataset_name}/{dataset_name}_test_key.csv")
+    return test_key
+
+
+def score(test_data, predictions, data_schema):
     id_col = data_schema["inputDatasets"]["regressionBaseMainInput"]["idField"]       
     target_col = data_schema["inputDatasets"]["regressionBaseMainInput"]["targetField"] 
-
-def score(test_data, predictions):
     predictions = predictions.merge(test_data[[id_col, target_col]], on=id_col)
+    
     rmse = mean_squared_error(predictions[target_col], predictions['prediction'], squared=False)
     mae = mean_absolute_error(predictions[target_col], predictions['prediction'])
     q3, q1 = np.percentile(predictions[target_col], [75, 25])
     iqr = q3 - q1
     nmae = mae / iqr
-    r2 = r2_score(predictions[target_col], predictions['prediction'])
+    # r2 = r2_score(predictions[target_col], predictions['prediction'])
+    _, _, r_value, _, _  = linregress(predictions[target_col], predictions['prediction'])
+    r2 = r_value * r_value
     results = {
         "rmse": np.round(rmse,4), 
         "mae": np.round(mae,4),
         "nmae": np.round(nmae,4),
-        "r2": np.round(r2,4),
+        "r2": np.round(r2,4), 
         "perc_pred_missing": np.round( 100 * (1 - predictions.shape[0] / test_data.shape[0]), 2)
         }
     return results
+
 
 def save_test_outputs(results, run_hpt, dataset_name):    
     df = pd.DataFrame(results) if dataset_name is None else pd.DataFrame([results])        
